@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header>
+  {% if username %}
+  <h2>Hello, {{username}} !</h2>
+  <a href="create"><button type="button">New Post</button></a>
+  <a href="logout"><button type="button">Logout</button></a>
+  {% else %}
+  <h2>Hello, please login or register to make a post</h2>
+  <a href="login"><button type="button">Login</button></a>
+  <a href="register"><button type="button">Register</button></a>
+  {% endif %}
+</header>
+<main>
+  {% for post in posts %}
+    <article>
+      <!--rendered on post.html-->
+      {{ post.render() | safe }}
+    </article>
+  {% endfor %}
+</main>
+{% endblock %}
