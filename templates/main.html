@@ -2,8 +2,8 @@
 
 {% block content %}
 <header>
-  {% if username %}
-  <h2>Hello, {{username}} !</h2>
+  {% if user %}
+  <h2>Hello, {{user.name}} !</h2>
   <a href="create"><button type="button">New Post</button></a>
   <a href="logout"><button type="button">Logout</button></a>
   {% else %}
@@ -16,7 +16,7 @@
   {% for post in posts %}
     <article>
       <!--rendered on post.html-->
-      {{ post.render() | safe }}
+      {{ post.render(user) | safe }}
     </article>
   {% endfor %}
 </main>

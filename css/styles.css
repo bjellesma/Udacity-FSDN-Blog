@@ -27,3 +27,48 @@ video {
 .post-date {
   float: right;
 }
+
+#wj_nav {
+  z-index: 1000000;
+  font-weight: bold;
+  font-size: 0.8em;
+  width: 100%;
+  background: #131313;
+  position: relative;
+  text-align: center;
+  display: none;
+  /*call to mixin */ }
+  @media (min-width: 600px) {
+    #wj_nav {
+      display: block; } }
+
+#wj_nav ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  list-style-image: none; }
+
+#wj_nav li {
+  display: block;
+  background: transparent;
+  padding: 15px 0 15px 0;
+  border-bottom: #1d1f20 1px solid;
+  width: 25%; }
+
+#wj_nav ul li a {
+  text-decoration: none;
+  margin: 0px;
+  color: #fff; }
+
+#wj_nav ul li a:hover {
+  color: #fff;
+  text-decoration: underline; }
+
+#wj_nav a {
+  text-decoration: none;
+  color: white; }
+
+#wj_nav a:hover {
+  text-decoration: none;
+  color: white; }

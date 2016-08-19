@@ -22,7 +22,7 @@ import random
 import hashlib
 import hmac
 from string import letters
-from google.appengine.ext import db
+import models
 #use /templates as the default dir for jina templates
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -84,7 +84,7 @@ class MainHandler(webapp2.RequestHandler):
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
-        self.user = uid and User.by_id(int(uid))
+        self.user = uid and models.User.by_id(int(uid))
 
 
 #renders the post with all of the necessary content
@@ -96,11 +96,11 @@ class Main(MainHandler):
     #Here we are taking the 10 most recent posts and passing them to main.html so that we can use them
     def get(self):
         if self.user:
-            username = self.user.name
+            user = self.user
         else:
             username = ''
-        posts = greetings = Post.all().order('-created')
-        self.render("main.html", posts = posts, username = username)
+        posts = greetings = models.Post.all().order('-created')
+        self.render("main.html", posts = posts, user = user)
 
 #makes a random string of 5 letters for use in salting passwords
 def make_salt(length = 5):
@@ -123,8 +123,8 @@ def valid_pw(name, password, h):
 
 class Posts(MainHandler):
     def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
+        key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
+        post = models.db.get(key)
 
         if not post:
             self.error(404)
@@ -132,53 +132,6 @@ class Posts(MainHandler):
 
         self.render("posts.html", post = post)
 
-#this is the class to hold the Post table
-class Post(db.Model):
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def render(self):
-        self._render_text = self.content.replace('\n', '<br>')
-        return render_str("post.html", p = self)
-
-#class for the user database
-class User(db.Model):
-    name = db.StringProperty(required = True)
-    pw_hash = db.StringProperty(required = True)
-    email = db.StringProperty()
-
-    #the @ symbol makes this a decorator so it is annotated
-    #cls is another way to use self
-    #cls should technically be used for class methods
-    #looks up user by ID... Very Useful
-    @classmethod
-    def by_id(cls, uid):
-        return User.get_by_id(uid, parent = users_key())
-
-    #looks up full user object by name
-    @classmethod
-    def by_name(cls, name):
-        user = User.all().filter('name =', name).get()
-        return user
-
-    #function to simply create User object that we can later store in the database
-    @classmethod
-    def register(cls, name, pw, email = None):
-        pw_hash = make_pw_hash(name, pw)
-        return User(parent = users_key(),
-                    name = name,
-                    pw_hash = pw_hash,
-                    email = email)
-
-    @classmethod
-    #called cls.by_name instead of User.by_name() so that we can override the function
-    #TODO change other use references
-    def login(cls, name, pw):
-        user = cls.by_name(name)
-        if user and valid_pw(name, pw, user.pw_hash):
-            return user
 
 class CreatePost(MainHandler):
     def get(self):
@@ -187,9 +140,10 @@ class CreatePost(MainHandler):
     def post(self):
         subject = self.request.get('subject')
         content = self.request.get('content')
+        author = self.user.name
 
         if subject and content:
-            p = Post(parent = blog_key(), subject = subject, content = content)
+            p = models.Post(parent = models.blog_key(), author = author, subject = subject, content = content)
             p.put()
             self.redirect('/posts/%s' % str(p.key().id()))
         else:
@@ -205,7 +159,7 @@ class Login(MainHandler):
         username = self.request.get('username')
         password = self.request.get('password')
 
-        successful_login = User.login(username, password)
+        successful_login = models.User.login(username, password)
         #if we were able to validate the user
         #login the user and direct them to the main page
         if successful_login:
@@ -237,7 +191,7 @@ class Register(MainHandler):
         verify = self.request.get('verify')
         email = self.request.get('email')
         #the following variable will return a username if there is a name conflict
-        notUniqueUser = User.by_name(username)
+        notUniqueUser = models.User.by_name(username)
 
         params = dict(username = username,
                       email = email)
@@ -265,7 +219,7 @@ class Register(MainHandler):
         if have_error:
             self.render('register.html', **params)
         else:
-            user = User.register(username, password, email)
+            user = models.User.register(username, password, email)
             #put() will actually commit the user to the database
             user.put()
             self.login(user)
@@ -284,13 +238,7 @@ def valid_email(email):
     return not email or EMAIL_RE.match(email)
 
 
-#simple functions to get database keys
-#These functions are not required but they are good practice
-def blog_key():
-    return db.Key.from_path('blogs', 'Post')
 
-def users_key(group = 'default'):
-    return db.Key.from_path('users', 'User')
 
 #routes
 app = webapp2.WSGIApplication([('/', Main),
