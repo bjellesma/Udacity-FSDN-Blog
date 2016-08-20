@@ -25,9 +25,9 @@ class Comments(db.Model):
     last_modified = db.DateTimeProperty(auto_now = True)
 
 
-    def render(self, user):
-        self._render_text = self.content.replace('\n', '<br>')
-        return main.render_str("post.html", p = self, user = user)
+class Likes(db.Model):
+    post_id = db.IntegerProperty()
+    author = author = db.StringProperty()
 
 #class for the user database
 class User(db.Model):
@@ -73,3 +73,8 @@ def blog_key():
 
 def users_key(group = 'default'):
     return db.Key.from_path('users', 'User')
+def comments_key():
+    return db.Key.from_path('comments', 'Comments')
+
+def likes_key(group = 'default'):
+    return db.Key.from_path('likes', 'likes')

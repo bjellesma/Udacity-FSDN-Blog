@@ -20,13 +20,17 @@
     Likes: {{ p.likes }} <br>
     <!-- If the user is not the author of the post and the user is not not signed in -->
     {% if p.author != user.name and user != '' %}
-    Add like
+    <form method="post">
+    <input type="hidden" name="post_id" value="{{ p.key().id() }}">
+    <input type="hidden" name="author" value="{{ user.name }}">
+    <input type="submit" value="Add like">
+  </form>
     <!-- TODO add ability to like-->
     {% endif %}
   </div>
   <div class="post-comments">
     Comments: {{ p.comments }} <br>
-    {% if p.author != user.name and user != '' %%}
+    {% if p.author != user.name and user != '' %}
     Add Comment
     <!-- TODO add ability to add comments-->
     {% endif %}
@@ -36,6 +40,7 @@
     <!-- If the currently signed in user is the post author -->
     {% if p.author == user.name %}
     Edit
+    Delete
     <!-- TODO add ability to edit-->
     {% endif %}
   </div>

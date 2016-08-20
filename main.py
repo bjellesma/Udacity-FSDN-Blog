@@ -104,6 +104,19 @@ class Main(MainHandler):
         posts = greetings = models.Post.all().order('-created')
         self.render("main.html", posts = posts, user = user)
 
+    def post(self):
+        post_id = int(self.request.get('post_id'))
+        author = self.request.get('author')
+        #create like
+        like = models.Likes(parent = models.likes_key(), post_id=post_id, author = author)
+        like.put()
+
+        #also update post
+        post = models.blog_key()
+        post.likes = post.likes + 1
+        post.put
+
+
 #makes a random string of 5 letters for use in salting passwords
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
@@ -132,7 +145,7 @@ class Posts(MainHandler):
             self.error(404)
             return
 
-        self.render("posts.html", post = post)
+        self.render("posts.html", post = post, user = self.user)
 
 
 class CreatePost(MainHandler):
@@ -146,6 +159,7 @@ class CreatePost(MainHandler):
 
         if subject and content:
             p = models.Post(parent = models.blog_key(), author = author, subject = subject, content = content)
+            #put() will commit the database transaction
             p.put()
             self.redirect('/posts/%s' % str(p.key().id()))
         else:
