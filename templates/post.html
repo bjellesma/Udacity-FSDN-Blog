@@ -18,20 +18,22 @@
 
   <div class="post-like">
     Likes: {{ p.likes }} <br>
-    {% if p.author != user.name %}
+    <!-- If the user is not the author of the post and the user is not not signed in -->
+    {% if p.author != user.name and user != '' %}
     Add like
     <!-- TODO add ability to like-->
     {% endif %}
   </div>
   <div class="post-comments">
     Comments: {{ p.comments }} <br>
-    {% if p.author != user.name %}
+    {% if p.author != user.name and user != '' %%}
     Add Comment
     <!-- TODO add ability to add comments-->
     {% endif %}
   </div>
   <div class="post-edit">
     Likes: {{ p.likes }} <br>
+    <!-- If the currently signed in user is the post author -->
     {% if p.author == user.name %}
     Edit
     <!-- TODO add ability to edit-->

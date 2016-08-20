@@ -95,10 +95,12 @@ def render_post(response, post):
 class Main(MainHandler):
     #Here we are taking the 10 most recent posts and passing them to main.html so that we can use them
     def get(self):
+        #set the user if they are logged in
+        #else set them to an empty string
         if self.user:
             user = self.user
         else:
-            username = ''
+            user = ''
         posts = greetings = models.Post.all().order('-created')
         self.render("main.html", posts = posts, user = user)
 

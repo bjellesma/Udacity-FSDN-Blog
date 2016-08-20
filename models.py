@@ -15,6 +15,20 @@ class Post(db.Model):
         self._render_text = self.content.replace('\n', '<br>')
         return main.render_str("post.html", p = self, user = user)
 
+class Comments(db.Model):
+    subject = db.StringProperty(required = True)
+    author = db.StringProperty()
+    likes = db.IntegerProperty()
+    comments = db.IntegerProperty()
+    content = db.TextProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+    last_modified = db.DateTimeProperty(auto_now = True)
+
+
+    def render(self, user):
+        self._render_text = self.content.replace('\n', '<br>')
+        return main.render_str("post.html", p = self, user = user)
+
 #class for the user database
 class User(db.Model):
     name = db.StringProperty(required = True)
