@@ -18,6 +18,7 @@
 
   <div class="post-like">
     Likes: {{ p.likes }} <br>
+
     <!-- If the user is not the author of the post and the user is not not signed in -->
     {% if p.author != user.name and user != '' %}
     <form method="post">

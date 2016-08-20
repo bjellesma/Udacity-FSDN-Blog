@@ -112,10 +112,11 @@ class Main(MainHandler):
         like.put()
 
         #also update post
-        post = models.blog_key()
+        key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
+        post = models.db.get(key)
         post.likes = post.likes + 1
-        post.put
-
+        post.put()
+        self.redirect('/')
 
 #makes a random string of 5 letters for use in salting passwords
 def make_salt(length = 5):
@@ -158,7 +159,7 @@ class CreatePost(MainHandler):
         author = self.user.name
 
         if subject and content:
-            p = models.Post(parent = models.blog_key(), author = author, subject = subject, content = content)
+            p = models.Post(parent = models.blog_key(), author = author, subject = subject, content = content, likes =0, comments=0)
             #put() will commit the database transaction
             p.put()
             self.redirect('/posts/%s' % str(p.key().id()))
