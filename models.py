@@ -16,14 +16,14 @@ class Post(db.Model):
         return main.render_str("post.html", p = self, user = user)
 
 class Comments(db.Model):
-    subject = db.StringProperty(required = True)
-    author = db.StringProperty()
-    likes = db.IntegerProperty()
-    comments = db.IntegerProperty()
-    content = db.TextProperty(required = True)
+    post_id = db.IntegerProperty()
+    author = author = db.StringProperty()
+    comment = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
 
+    def render(self):
+        self._render_text = self.comment.replace('\n', '<br>')
+        return main.render_str("comment_view.html", c = self)
 
 class Likes(db.Model):
     post_id = db.IntegerProperty()

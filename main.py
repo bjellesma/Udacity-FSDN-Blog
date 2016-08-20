@@ -141,13 +141,31 @@ class Posts(MainHandler):
     def get(self, post_id):
         key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
         post = models.db.get(key)
-
-        if not post:
-            self.error(404)
-            return
-
-        self.render("posts.html", post = post, user = self.user)
-
+        if self.request.get("action"):
+            if self.request.get("action") == "delete":
+                #delete post
+                post.delete()
+                self.redirect('/')
+            elif self.request.get("action") == "edit":
+                self.render("edit.html", post = post)
+        else:
+            #get all comments with the post id
+            comments = greetings = models.Comments.all()
+            if not post:
+                self.error(404)
+                return
+            #rener the posts page with the comments template
+            self.render("posts.html", post = post, user = self.user, comments = comments)
+    def post(self, post_id):
+        #postdate for editting post
+        subject = self.request.get("subject")
+        content = self.request.get("content")
+        key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
+        post = models.db.get(key)
+        post.subject = subject
+        post.content = content
+        post.put()
+        self.redirect('/posts/' + post_id)
 
 class CreatePost(MainHandler):
     def get(self):
@@ -166,6 +184,31 @@ class CreatePost(MainHandler):
         else:
             error = "subject and content, please!"
             self.render("create.html", subject=subject, content=content, error=error)
+
+class Comment(MainHandler):
+    def get(self):
+        post_id = self.request.get("post")
+        key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
+        post = models.db.get(key)
+        self.render("comment.html", post = post)
+
+    def post(self):
+        comment = self.request.get('comment')
+        post_id = int(self.request.get('post_id'))
+        author = self.request.get('author')
+
+        if comment:
+            c = models.Comments(parent = models.comments_key(), author = author, comment = comment, post_id = post_id)
+            c.put()
+            key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
+            post = models.db.get(key)
+            post.comments = post.comments + 1
+            post.put()
+            self.redirect('/posts/%s' % str(post_id))
+        else:
+            error = "comment, please!"
+            self.render("create.html", comment=comment, error=error)
+
 
 class Login(MainHandler):
 
@@ -264,5 +307,6 @@ app = webapp2.WSGIApplication([('/', Main),
                                ('/login', Login),
                                ('/logout', Logout),
                                ('/posts/([0-9]+)', Posts),
-                               ('/register', Register)],
+                               ('/register', Register),
+                               ('/comment', Comment)],
                               debug=True)

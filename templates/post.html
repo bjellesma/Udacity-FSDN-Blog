@@ -1,7 +1,7 @@
 <div class="post">
   <div class="post-heading">
     <div class="post-title">
-      <a href="posts/{{ p.key().id() }}"><h2>{{p.subject}}</h2></a>
+      <a href="/posts/{{ p.key().id() }}"><h2>{{p.subject}}</h2></a>
       Published by {{ p.author }}
       Likes: {{ p.likes }}
       Comments: {{ p.comments }}
@@ -32,16 +32,15 @@
   <div class="post-comments">
     Comments: {{ p.comments }} <br>
     {% if p.author != user.name and user != '' %}
-    Add Comment
+    <a href = "/comment?post={{ p.key().id() }}">Add Comment</a>
     <!-- TODO add ability to add comments-->
     {% endif %}
   </div>
   <div class="post-edit">
-    Likes: {{ p.likes }} <br>
     <!-- If the currently signed in user is the post author -->
     {% if p.author == user.name %}
-    Edit
-    Delete
+    <a href="/posts/{{ p.key().id() }}?action=edit">Edit</a>
+    <a href="/posts/{{ p.key().id() }}?action=delete">Delete</a>
     <!-- TODO add ability to edit-->
     {% endif %}
   </div>

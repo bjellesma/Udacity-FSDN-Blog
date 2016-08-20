@@ -2,4 +2,9 @@
 
 {% block content %}
   {{post.render(user) | safe}}
+  {% for comment in comments %}
+    {% if comment.post_id == post.key().id() %}
+      {{comment.render() | safe}}
+    {% endif %}
+  {% endfor %}
 {% endblock %}
