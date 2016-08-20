@@ -1,1 +1,4 @@
-{{ c.author }} - {{c.comment}}
+<div class="comment">
+  <p class ="comment-header">{{ c.author }} ({{ c.created.strftime("%b %d, %Y") }})</p>
+  <p class="comment-body">{{c.comment}}</p>
+</div>

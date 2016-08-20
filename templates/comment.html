@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% block title %}New Comment{% endblock %}
 {% block content %}
   <h2>Comment for:</h2>
   <div class="post">
@@ -31,7 +31,6 @@
       <div class="error">{{error}}</div>
 
       <input type="hidden" name="post_id" value="{{post.key().id()}}">
-      <input type="hidden" name="author" value="{{post.author}}">
       <input type="submit">
     </form>
 {% endblock %}

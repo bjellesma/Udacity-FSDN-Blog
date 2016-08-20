@@ -1,46 +1,41 @@
 <div class="post">
   <div class="post-heading">
     <div class="post-title">
-      <a href="/posts/{{ p.key().id() }}"><h2>{{p.subject}}</h2></a>
-      Published by {{ p.author }}
-      Likes: {{ p.likes }}
+      <a href="/posts/{{ p.key().id() }}"><h1>{{p.subject}}</h1></a>
+    </div>
+    <div class ="post-date">
+      </p>Published by {{ p.author }} on {{p.created.strftime("%b %d, %Y")}}</p>
+    </div>
+  </div>
+  <div class="post-content">
+    <p>{{p._render_text | safe}}</p>
+  </div>
+  <div class="post-footer">
+    <div class="post-like">
+      <!-- If the user is not the author of the post and the user is not not signed in -->
+      {% if p.author != user.name and user != '' %}
+      <a href="/posts/{{ p.key().id() }}?action=like"><button type="button">Add like</button></a>
+      {% elif user == '' %}
+      <a href="login"><button type="button">Please login to comment</button></a>
+      <!-- display nothing if they are the post author -->
+      {% endif %}
+      Likes: {{ p.likes }}<br>
+    </div>
+    <div class="post-comment">
+      {% if p.author != user.name and user != '' %}
+      <a href = "/comment?post={{ p.key().id() }}"><button type="button">Add Comment</button></a>
+      {% elif user == '' %}
+      <a href="login"><button type="button">Please login to comment</button></a>
+      <!-- display nothing if they are the post author -->
+      {% endif %}
       Comments: {{ p.comments }}
     </div>
-
-    <div class="post-date">
-      {{p.created.strftime("%b %d, %Y")}}
-    </div>
   </div>
-
-  <div class="post-content">
-    {{p._render_text | safe}}
-  </div>
-
-  <div class="post-like">
-    Likes: {{ p.likes }} <br>
-
-    <!-- If the user is not the author of the post and the user is not not signed in -->
-    {% if p.author != user.name and user != '' %}
-    <form method="post">
-    <input type="hidden" name="post_id" value="{{ p.key().id() }}">
-    <input type="hidden" name="author" value="{{ user.name }}">
-    <input type="submit" value="Add like">
-  </form>
-    <!-- TODO add ability to like-->
-    {% endif %}
-  </div>
-  <div class="post-comments">
-    Comments: {{ p.comments }} <br>
-    {% if p.author != user.name and user != '' %}
-    <a href = "/comment?post={{ p.key().id() }}">Add Comment</a>
-    <!-- TODO add ability to add comments-->
-    {% endif %}
-  </div>
-  <div class="post-edit">
+  <div class="post-actions">
     <!-- If the currently signed in user is the post author -->
     {% if p.author == user.name %}
-    <a href="/posts/{{ p.key().id() }}?action=edit">Edit</a>
-    <a href="/posts/{{ p.key().id() }}?action=delete">Delete</a>
+    <a href="/posts/{{ p.key().id() }}?action=edit"><button type="button">Edit</button></a>
+    <a href="/posts/{{ p.key().id() }}?action=delete"><button type="button">Delete</button></a>
     <!-- TODO add ability to edit-->
     {% endif %}
   </div>

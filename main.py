@@ -104,20 +104,6 @@ class Main(MainHandler):
         posts = greetings = models.Post.all().order('-created')
         self.render("main.html", posts = posts, user = user)
 
-    def post(self):
-        post_id = int(self.request.get('post_id'))
-        author = self.request.get('author')
-        #create like
-        like = models.Likes(parent = models.likes_key(), post_id=post_id, author = author)
-        like.put()
-
-        #also update post
-        key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
-        post = models.db.get(key)
-        post.likes = post.likes + 1
-        post.put()
-        self.redirect('/')
-
 #makes a random string of 5 letters for use in salting passwords
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
@@ -141,13 +127,20 @@ class Posts(MainHandler):
     def get(self, post_id):
         key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
         post = models.db.get(key)
+        posts = greetings = models.Post.all().order('-created')
         if self.request.get("action"):
             if self.request.get("action") == "delete":
                 #delete post
                 post.delete()
-                self.redirect('/')
+                self.render("main.html", posts = posts, user = self.user)
             elif self.request.get("action") == "edit":
                 self.render("edit.html", post = post)
+            elif self.request.get("action") == "like":
+                post.likes = post.likes + 1
+                post.put()
+                like = models.Likes(parent = models.likes_key(), post_id=post.key().id(), author = self.user.name)
+                like.put()
+                self.render("main.html", posts = posts, user = self.user)
         else:
             #get all comments with the post id
             comments = greetings = models.Comments.all()
@@ -195,16 +188,16 @@ class Comment(MainHandler):
     def post(self):
         comment = self.request.get('comment')
         post_id = int(self.request.get('post_id'))
-        author = self.request.get('author')
 
         if comment:
-            c = models.Comments(parent = models.comments_key(), author = author, comment = comment, post_id = post_id)
+            c = models.Comments(parent = models.comments_key(), author = self.user.name, comment = comment, post_id = post_id)
             c.put()
             key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
             post = models.db.get(key)
+            comments = greetings = models.Comments.all().filter('post_id =', post_id)
             post.comments = post.comments + 1
             post.put()
-            self.redirect('/posts/%s' % str(post_id))
+            self.render("posts.html", post = post, user = self.user, comments = comments)
         else:
             error = "comment, please!"
             self.render("create.html", comment=comment, error=error)

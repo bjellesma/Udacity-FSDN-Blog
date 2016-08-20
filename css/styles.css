@@ -19,13 +19,37 @@ video {
   border-top: 1px solid black;
 }
 
+.post-heading{
+
+}
 .post-title {
   font-size: 20px;
   text-align: center;
   font-weight: bold;
 }
 .post-date {
-  float: right;
+  font-weight: lighter;
+  font-style: italic;
+}
+.post-like {
+  white-space: nowrap;
+}
+.post-content {
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.comment {
+
+}
+
+.comment-header {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.comment-body {
+  padding-left: 20px;
 }
 
 #wj_nav {
