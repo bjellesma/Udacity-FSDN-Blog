@@ -14,41 +14,67 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+#TODO take out once refactoring is done
+#Google app engine imports
+import webapp2
+
+#templating
+import jinja2
+
+#modules for securing information
 import os
 import re
-import webapp2
-import jinja2
 import random
 import hashlib
 import hmac
 from string import letters
+
+#database, views, routes
 import models
+import secure
+import routes
+
 #use /templates as the default dir for jina templates
-template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+
+#use views as default directory for all views
+template_dir = os.path.join(os.path.dirname(__file__), 'views')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
 
-#normally this secret is kept in a seperate module
-secret = 'doctorWho'
+#secure value for making cookies
+secret = secure.secret()
 
-#takes in a template and any extra params and renders the template
 def render_str(template, **params):
+    """
+    function to render the template and any extra parameters
+    used in MainHandler.render
+    """
     t = jinja_env.get_template(template)
     return t.render(params)
 
-#makes a secure val based on the user's id
+
 def make_secure_val(user_id):
+    """
+    function to make a secure value based on the user id for use in cookies
+    """
     return '%s|%s' % (user_id, hmac.new(secret, user_id).hexdigest())
 
-#function to test if value is the same secure value made by make_secure_val()
-#again, based on the user id
+
 def check_secure_val(secure_val):
+    """
+    function to test if value is the same secure value made by make_secure_val()
+    for use with cookies
+    """
     val = secure_val.split('|')[0]
     if secure_val == make_secure_val(val):
         return val
 
 class MainHandler(webapp2.RequestHandler):
-#the following functions are handler functions
+    """
+    The MainHandler class is the parent class used for all routes
+    """
+    #the following functions are handler functions
 
     #basically uses self.write in a shorter form
     def render(self, template, **kw):
@@ -294,12 +320,4 @@ def valid_email(email):
 
 
 #routes
-app = webapp2.WSGIApplication([('/', Main),
-                               ('/posts', Posts),
-                               ('/create', CreatePost),
-                               ('/login', Login),
-                               ('/logout', Logout),
-                               ('/posts/([0-9]+)', Posts),
-                               ('/register', Register),
-                               ('/comment', Comment)],
-                              debug=True)
+app = routes.routes()
