@@ -19,32 +19,26 @@
 #Google app engine imports
 import webapp2
 
-#templating
-import jinja2
+
 
 #modules for securing information
-import os
-import re
-import random
-import hashlib
-import hmac
-from string import letters
+import jinja2
+
+
 
 #database, views, routes
 import models
-import secure
+
 import routes
 
-#use /templates as the default dir for jina templates
+import webapp2
 
-#use views as default directory for all views
+import os
 template_dir = os.path.join(os.path.dirname(__file__), 'views')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
 
-#secure value for making cookies
-secret = secure.secret()
-
+#use /templates as the default dir for jina templates
 def render_str(template, **params):
     """
     function to render the template and any extra parameters
@@ -54,63 +48,13 @@ def render_str(template, **params):
     return t.render(params)
 
 
-def make_secure_val(user_id):
-    """
-    function to make a secure value based on the user id for use in cookies
-    """
-    return '%s|%s' % (user_id, hmac.new(secret, user_id).hexdigest())
 
 
-def check_secure_val(secure_val):
-    """
-    function to test if value is the same secure value made by make_secure_val()
-    for use with cookies
-    """
-    val = secure_val.split('|')[0]
-    if secure_val == make_secure_val(val):
-        return val
 
-class MainHandler(webapp2.RequestHandler):
-    """
-    The MainHandler class is the parent class used for all routes
-    """
-    #the following functions are handler functions
 
-    #basically uses self.write in a shorter form
-    def render(self, template, **kw):
-        self.response.out.write(render_str(template, **kw))
 
-    def write(self, *a, **kw):
-        self.response.out.write(*a, **kw)
 
-    #creates cookie based on id
-    #TODO create expire time
-    def set_secure_cookie(self, name, user_id):
-        cookie_val = make_secure_val(user_id)
-        self.response.headers.add_header(
-            'Set-Cookie',
-            '%s=%s; Path=/' % (name, cookie_val))
 
-    #reads the cookie based on the name we've called the cookie
-    def read_secure_cookie(self, name):
-        cookie_val = self.request.cookies.get(name)
-        #both of the following need to be true
-        return cookie_val and check_secure_val(cookie_val)
-
-    #login and set a secure cookie based on the user's id
-    def login(self, user):
-        self.set_secure_cookie('user_id', str(user.key().id()))
-
-    #logout the user by blanking out their cookie
-    def logout(self):
-        self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
-    #checks if user is logged in
-    #reads a cookie
-    #TODO use on main.html
-    def initialize(self, *a, **kw):
-        webapp2.RequestHandler.initialize(self, *a, **kw)
-        uid = self.read_secure_cookie('user_id')
-        self.user = uid and models.User.by_id(int(uid))
 
 
 #renders the post with all of the necessary content
@@ -118,17 +62,7 @@ def render_post(response, post):
     response.out.write('<b>' + post.subject + '</b><br>')
     response.out.write(post.content)
 
-class Main(MainHandler):
-    #Here we are taking the 10 most recent posts and passing them to main.html so that we can use them
-    def get(self):
-        #set the user if they are logged in
-        #else set them to an empty string
-        if self.user:
-            user = self.user
-        else:
-            user = ''
-        posts = greetings = models.Post.all().order('-created')
-        self.render("main.html", posts = posts, user = user)
+
 
 #makes a random string of 5 letters for use in salting passwords
 def make_salt(length = 5):
@@ -149,7 +83,7 @@ def valid_pw(name, password, h):
     #only returns h if it is equal to the hashed password in the database
     return h == make_pw_hash(name, password, salt)
 
-class Posts(MainHandler):
+class Posts(routes.MainHandler):
     def get(self, post_id):
         key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
         post = models.db.get(key)
@@ -186,7 +120,7 @@ class Posts(MainHandler):
         post.put()
         self.redirect('/posts/' + post_id)
 
-class CreatePost(MainHandler):
+class CreatePost(routes.MainHandler):
     def get(self):
         self.render("create.html")
 
@@ -204,7 +138,7 @@ class CreatePost(MainHandler):
             error = "subject and content, please!"
             self.render("create.html", subject=subject, content=content, error=error)
 
-class Comment(MainHandler):
+class Comment(routes.MainHandler):
     def get(self):
         post_id = self.request.get("post")
         key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
@@ -229,7 +163,7 @@ class Comment(MainHandler):
             self.render("create.html", comment=comment, error=error)
 
 
-class Login(MainHandler):
+class Login(routes.MainHandler):
 
     def get(self):
         self.render("login.html")
@@ -252,13 +186,13 @@ class Login(MainHandler):
             error = 'That username and/or password is invalid'
             self.render('login.html', error = error)
 
-class Logout(MainHandler):
+class Logout(routes.MainHandler):
     #logs out user and redirects them to the main page
     def get(self):
         self.logout()
         self.redirect('/')
 
-class Register(MainHandler):
+class Register(routes.MainHandler):
 
     def get(self):
         self.render("register.html")
@@ -303,20 +237,6 @@ class Register(MainHandler):
             user.put()
             self.login(user)
             self.redirect('/')
-
-USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-def valid_username(username):
-    return username and USER_RE.match(username)
-
-PASS_RE = re.compile(r"^.{3,20}$")
-def valid_password(password):
-    return password and PASS_RE.match(password)
-
-EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
-def valid_email(email):
-    return not email or EMAIL_RE.match(email)
-
-
 
 
 #routes
