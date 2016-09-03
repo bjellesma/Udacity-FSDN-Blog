@@ -2,6 +2,7 @@
 {% block title %}Welcome{% endblock %}
 {% block content %}
 <header>
+
   {% if user %}
   <h2>Hello, {{user.name}} !</h2>
   <a href="create"><button type="button">New Post</button></a>
@@ -16,7 +17,8 @@
   {% for post in posts %}
     <article>
       <!--rendered on post.html-->
-      {{ post.render(user) | safe }}
+      <!-- This refers to the render method in models.py -->
+      {{ post.render(user, likes) | safe }}
     </article>
   {% endfor %}
 </main>

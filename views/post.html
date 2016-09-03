@@ -12,11 +12,21 @@
   </div>
   <div class="post-footer">
     <div class="post-like">
+      <!--If some user is logged in, we will test to see if they've already liked the post -->
+      {% if user != '' %}
+      {% for like in likes %}
+        {% if like.post_id == p.key().id() and like.author == user.name %}
+        <p>You've already liked this post<p>
+        {% endif %}
+      {% endfor %}
       <!-- If the user is not the author of the post and the user is not not signed in -->
-      {% if p.author != user.name and user != '' %}
+      {% elif p.author != user.name and user != '' %}
+      <!-- by using a get request in the url parameter, we prevent data being sent multiple times -->
       <a href="/posts/{{ p.key().id() }}?action=like"><button type="button">Add like</button></a>
+
+
       {% elif user == '' %}
-      <a href="login"><button type="button">Please login to comment</button></a>
+      <a href="login"><button type="button">Please login to like</button></a>
       <!-- display nothing if they are the post author -->
       {% endif %}
       Likes: {{ p.likes }}<br>

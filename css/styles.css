@@ -7,6 +7,7 @@ ul {
 
 body {
   background-color: #fff;
+  color: #000;
 }
 img,
 embed,
@@ -96,3 +97,16 @@ video {
 #wj_nav a:hover {
   text-decoration: none;
   color: white; }
+
+/*
+forms
+*/
+.label{
+  color:black;
+}
+/*
+Login form
+*/
+.error {
+  color:red;
+}

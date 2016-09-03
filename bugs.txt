@@ -1,0 +1,2 @@
+1. Like only shows up on homepage when user refreshes page
+2. Delete only shows up on homepage when user refreshes page

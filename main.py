@@ -64,24 +64,6 @@ def render_post(response, post):
 
 
 
-#makes a random string of 5 letters for use in salting passwords
-def make_salt(length = 5):
-    return ''.join(random.choice(letters) for x in xrange(length))
-
-##makes a password using sha256
-def make_pw_hash(name, pw, salt = None):
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    #returns salt used as well as the hash
-    return '%s,%s' % (salt, h)
-
-#function to check your entered password against the password in the db
-def valid_pw(name, password, h):
-    #the salt is the first comma seperated parameter stored
-    salt = h.split(',')[0]
-    #only returns h if it is equal to the hashed password in the database
-    return h == make_pw_hash(name, password, salt)
 
 class Posts(routes.MainHandler):
     def get(self, post_id):

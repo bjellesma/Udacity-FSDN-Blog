@@ -101,7 +101,8 @@ class Main(MainHandler):
         else:
             user = ''
         posts = greetings = models.Post.all().order('-created')
-        self.render("main.html", posts = posts, user = user)
+        likes = greeting = models.Likes.all()
+        self.render("main.html", posts = posts, user = user, likes = likes)
 class Posts(MainHandler):
     def get(self, post_id):
         key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
@@ -109,17 +110,21 @@ class Posts(MainHandler):
         posts = greetings = models.Post.all().order('-created')
         if self.request.get("action"):
             if self.request.get("action") == "delete":
-                #delete post
+                #TODO function only takes effect when user refreshes page
                 post.delete()
                 self.render("main.html", posts = posts, user = self.user)
+                self.redirect("/")
             elif self.request.get("action") == "edit":
                 self.render("edit.html", post = post)
             elif self.request.get("action") == "like":
-                post.likes = post.likes + 1
+
+                post.likes = int(post.likes) + 1
                 post.put()
                 like = models.Likes(parent = models.likes_key(), post_id=post.key().id(), author = self.user.name)
                 like.put()
                 self.render("main.html", posts = posts, user = self.user)
+                #TODO like only shows up after page reload
+                self.redirect("/")
         else:
             #get all comments with the post id
             comments = greetings = models.Comments.all()
@@ -177,6 +182,7 @@ class Comment(MainHandler):
             post.comments = post.comments + 1
             post.put()
             self.render("posts.html", post = post, user = self.user, comments = comments)
+            self.redirect("/posts/" + str(post_id))
         else:
             error = "comment, please!"
             self.render("create.html", comment=comment, error=error)
@@ -228,18 +234,18 @@ class Register(MainHandler):
         params = dict(username = username,
                       email = email)
 
-        if not valid_username(username):
+        if not functions.valid_username(username):
             params['error_username'] = "That's not a valid username."
             have_error = True
 
-        if not valid_password(password):
+        if not functions.valid_password(password):
             params['error_password'] = "That wasn't a valid password."
             have_error = True
         elif password != verify:
             params['error_verify'] = "Your passwords didn't match."
             have_error = True
 
-        if not valid_email(email):
+        if not functions.valid_email(email):
             params['error_email'] = "That's not a valid email."
             have_error = True
 

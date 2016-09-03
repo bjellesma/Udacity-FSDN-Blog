@@ -1,5 +1,7 @@
 from google.appengine.ext import db
+#module imports
 import main
+import functions
 #this is the class to hold the Post table
 class Post(db.Model):
     subject = db.StringProperty(required = True)
@@ -11,9 +13,9 @@ class Post(db.Model):
     last_modified = db.DateTimeProperty(auto_now = True)
 
 
-    def render(self, user):
+    def render(self, user, likes):
         self._render_text = self.content.replace('\n', '<br>')
-        return main.render_str("post.html", p = self, user = user)
+        return main.render_str("post.html", p = self, user = user, likes = likes)
 
 class Comments(db.Model):
     post_id = db.IntegerProperty()
@@ -52,7 +54,7 @@ class User(db.Model):
     #function to simply create User object that we can later store in the database
     @classmethod
     def register(cls, name, pw, email = None):
-        pw_hash = make_pw_hash(name, pw)
+        pw_hash = functions.make_pw_hash(name, pw)
         return User(parent = users_key(),
                     name = name,
                     pw_hash = pw_hash,
@@ -63,7 +65,7 @@ class User(db.Model):
     #TODO change other use references
     def login(cls, name, pw):
         user = cls.by_name(name)
-        if user and main.valid_pw(name, pw, user.pw_hash):
+        if user and functions.valid_pw(name, pw, user.pw_hash):
             return user
 
 #simple functions to get database keys
