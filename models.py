@@ -12,8 +12,8 @@ class Post(db.Model):
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
 
-
-    def render(self, user, likes):
+    #making likes an optional parameter
+    def render(self, user, likes = ''):
         self._render_text = self.content.replace('\n', '<br>')
         return main.render_str("post.html", p = self, user = user, likes = likes)
 

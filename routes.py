@@ -1,23 +1,28 @@
+"""
+File: routes.py
+Author: William Jellesma
 
-
-#templating
-import jinja2
-
-import os
-import re
+This file houses all of the routing files including get and post requests
+"""
 
 #Google app engine imports
 import webapp2
 
-#TODO take out once refactoring is done
+#templating modules
+import jinja2
+
+#OS modules
+import os
+import re
+
+#app modules
 import main
-
 import models
-
 import functions
 
-
-
+"""
+This is the main function to handle all of the routes
+"""
 def routes():
     """
     function to organize all of the routes
@@ -33,64 +38,82 @@ def routes():
                               debug=True)
     return app
 
+"""
+Class: MainHandler
+Inherits: webapp2.RequestHandler
+
+The mainhandler class will handle all common functionality with routing
+"""
 class MainHandler(webapp2.RequestHandler):
-    """
-    The MainHandler class is the parent class used for all routes
-    **params - all extra parameters
-    """
 
+    """
+    Args: self (class reference), template (template object), **kw (unlimited parameters)
 
+    This function is used in renering the specified view to the screen
+    """
     def render(self, template, **kw):
-        """
-        function to simply render the text using the views folder by default
-        """
         self.response.out.write(main.render_str(template, **kw))
 
+    """
+    Args: self (class reference), *a (template object), **kw (unlimited parameters)
+
+    This function is writing the view to the screen
+    """
     def write(self, *a, **kw):
-        """
-        function to simply render the text using the views folder by default
-        """
         self.response.out.write(*a, **kw)
 
+    """
+    Args: self (class reference), name (string), user_id (integer)
 
-    #TODO create expire time
+    function to create cookie based on user id
+    """
     def set_secure_cookie(self, name, user_id):
-        """
-        function to create cookie based on user id
-        """
-        #TODO take out main.
         cookie_val = functions.make_secure_val(user_id)
         self.response.headers.add_header(
             'Set-Cookie',
             '%s=%s; Path=/' % (name, cookie_val))
 
+    """
+    Args: self (class reference), name (string)
+
+    function to read cookie of user
+    """
     def read_secure_cookie(self, name):
-        """
-        function to read cookie of user
-        """
         cookie_val = self.request.cookies.get(name)
-        #both of the following need to be true
-        #TODO take out main.
         return cookie_val and functions.check_secure_val(cookie_val)
 
-    #login and set a secure cookie based on the user's id
+    """
+    Args: self (class reference), user (GQL value)
+
+    function to login user and set cookie
+    """
     def login(self, user):
-        """
-        function to login user and set session cookie
-        """
         self.set_secure_cookie('user_id', str(user.key().id()))
 
-    #logout the user by blanking out their cookie
+    """
+    Args: self (class reference)
+
+    function to logout user and destroy cookie
+    """
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
-    #checks if user is logged in
-    #reads a cookie
-    #TODO use on main.html
+
+    """
+    Args: self (class reference), *a (template object), **kw (unlimited parameters)
+
+    This function initializes the user in the database
+    """
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
         self.user = uid and models.User.by_id(int(uid))
 
+"""
+Class: Main
+Inherits: models.MainHandler class
+
+The routes for the main page
+"""
 class Main(MainHandler):
     #Here we are taking the 10 most recent posts and passing them to main.html so that we can use them
     def get(self):
@@ -103,27 +126,36 @@ class Main(MainHandler):
         posts = greetings = models.Post.all().order('-created')
         likes = greeting = models.Likes.all()
         self.render("main.html", posts = posts, user = user, likes = likes)
+
+"""
+Class: Posts
+Inherits: models.MainHandler class
+
+The routes for the posts page
+"""
 class Posts(MainHandler):
     def get(self, post_id):
+        #get the post object requested
         key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
         post = models.db.get(key)
         posts = greetings = models.Post.all().order('-created')
+
+        #test if any get requests were sent in the url
         if self.request.get("action"):
             if self.request.get("action") == "delete":
-                #TODO function only takes effect when user refreshes page
+                #BUG function only takes effect when user refreshes page
                 post.delete()
                 self.render("main.html", posts = posts, user = self.user)
                 self.redirect("/")
             elif self.request.get("action") == "edit":
                 self.render("edit.html", post = post)
             elif self.request.get("action") == "like":
-
                 post.likes = int(post.likes) + 1
                 post.put()
                 like = models.Likes(parent = models.likes_key(), post_id=post.key().id(), author = self.user.name)
                 like.put()
                 self.render("main.html", posts = posts, user = self.user)
-                #TODO like only shows up after page reload
+                #BUG like only shows up after page reload
                 self.redirect("/")
         else:
             #get all comments with the post id
@@ -134,9 +166,11 @@ class Posts(MainHandler):
             #rener the posts page with the comments template
             self.render("posts.html", post = post, user = self.user, comments = comments)
     def post(self, post_id):
-        #postdate for editting post
+        #postdata for editting post
         subject = self.request.get("subject")
         content = self.request.get("content")
+
+        #Update the post
         key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
         post = models.db.get(key)
         post.subject = subject
@@ -144,6 +178,12 @@ class Posts(MainHandler):
         post.put()
         self.redirect('/posts/' + post_id)
 
+"""
+Class: CreatePost
+Inherits: models.MainHandler class
+
+The routes for the create page
+"""
 class CreatePost(MainHandler):
     def get(self):
         self.render("create.html")
@@ -153,6 +193,7 @@ class CreatePost(MainHandler):
         content = self.request.get('content')
         author = self.user.name
 
+        #if the editted post contains subject and content
         if subject and content:
             p = models.Post(parent = models.blog_key(), author = author, subject = subject, content = content, likes =0, comments=0)
             #put() will commit the database transaction
@@ -162,6 +203,12 @@ class CreatePost(MainHandler):
             error = "subject and content, please!"
             self.render("create.html", subject=subject, content=content, error=error)
 
+"""
+Class: Comment
+Inherits: models.MainHandler class
+
+The routes for the comment page, handling creating comments
+"""
 class Comment(MainHandler):
     def get(self):
         post_id = self.request.get("post")
@@ -173,6 +220,7 @@ class Comment(MainHandler):
         comment = self.request.get('comment')
         post_id = int(self.request.get('post_id'))
 
+        #if the user has posted a comment
         if comment:
             c = models.Comments(parent = models.comments_key(), author = self.user.name, comment = comment, post_id = post_id)
             c.put()
@@ -187,7 +235,12 @@ class Comment(MainHandler):
             error = "comment, please!"
             self.render("create.html", comment=comment, error=error)
 
+"""
+Class: login
+Inherits: models.MainHandler class
 
+The routes for the login page, handling logging in the user and displaying if there is a problem
+"""
 class Login(MainHandler):
 
     def get(self):
@@ -204,19 +257,30 @@ class Login(MainHandler):
             #refers to the login handler function
             #you can also tell by the parameters
             self.login(successful_login)
-            #TODO change to render the welcome screen
             self.redirect('/')
         #else, spit out the errors
         else:
             error = 'That username and/or password is invalid'
             self.render('login.html', error = error)
 
+"""
+Class: Logout
+Inherits: models.MainHandler class
+
+The routes for the login page, handling logging out the user
+"""
 class Logout(MainHandler):
     #logs out user and redirects them to the main page
     def get(self):
         self.logout()
         self.redirect('/')
 
+"""
+Class: Register
+Inherits: models.MainHandler class
+
+The routes for the register page, handling registering the user and displaying if there are any errors
+"""
 class Register(MainHandler):
 
     def get(self):

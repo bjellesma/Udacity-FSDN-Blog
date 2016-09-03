@@ -1,0 +1,1 @@
+1. make blog publically available through google app engine 
