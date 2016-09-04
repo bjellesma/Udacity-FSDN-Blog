@@ -16,6 +16,7 @@
 * Download or clone this repo
 * Open Google App engine and launch a new project with the source point to the directory of the code. The port doesn't matter as long as it does not conflict with any of your other software
 * navigate to localhost:[port-number] in your browser
+* Note: You will also need to fill in your secure information in secure-sample.py and remove the -sample from the filename
 
 <a name="Author"><h1>Author</h1></a>
   <p>This project was authored by William Jellesma. </p>

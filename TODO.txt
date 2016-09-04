@@ -1,1 +1,1 @@
-1. make blog publically available through google app engine 
+1. make blog publically available through google app engine | https://udacity-fsnd-multiuser-blog.appspot.com/

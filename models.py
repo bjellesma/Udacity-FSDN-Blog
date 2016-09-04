@@ -1,8 +1,23 @@
+"""
+File: models.py
+Author: William Jellesma
+
+This file houses all of the database schema and functions related to the db
+"""
+
+#database modules
 from google.appengine.ext import db
-#module imports
+
+#app modules
 import main
 import functions
-#this is the class to hold the Post table
+
+"""
+Class: Post
+Inherits: db.Model class
+
+The database schema and class functions for the Post table is contained here
+"""
 class Post(db.Model):
     subject = db.StringProperty(required = True)
     author = db.StringProperty()
@@ -12,26 +27,54 @@ class Post(db.Model):
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
 
-    #making likes an optional parameter
+    """
+    Args: self (class reference), user (GQL value), likes (GQL value, default = '')
+
+    Returns:
+    renders the posts with all of the relavent data
+    """
     def render(self, user, likes = ''):
         self._render_text = self.content.replace('\n', '<br>')
         return main.render_str("post.html", p = self, user = user, likes = likes)
 
+"""
+Class: Comments
+Inherits: db.Model class
+
+The database schema and class functions for the Comments table is contained here
+"""
 class Comments(db.Model):
     post_id = db.IntegerProperty()
     author = author = db.StringProperty()
     comment = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
 
+    """
+    Args: self (class reference)
+
+    Returns:
+    renders the comment for the post
+    """
     def render(self):
         self._render_text = self.comment.replace('\n', '<br>')
         return main.render_str("comment_view.html", c = self)
 
+"""
+Class: Likes
+Inherits: db.Model class
+
+The database schema and class functions for the Likes table is contained here
+"""
 class Likes(db.Model):
     post_id = db.IntegerProperty()
     author = author = db.StringProperty()
 
-#class for the user database
+"""
+Class: User
+Inherits: db.Model class
+
+The database schema and class functions for the User table is contained here
+"""
 class User(db.Model):
     name = db.StringProperty(required = True)
     pw_hash = db.StringProperty(required = True)
@@ -40,18 +83,33 @@ class User(db.Model):
     #the @ symbol makes this a decorator so it is annotated
     #cls is another way to use self
     #cls should technically be used for class methods
-    #looks up user by ID... Very Useful
+    """
+    Args: cls (class reference), uid (integer)
+
+    Returns:
+    User object by id
+    """
     @classmethod
     def by_id(cls, uid):
         return User.get_by_id(uid, parent = users_key())
 
-    #looks up full user object by name
+    """
+    Args: cls (class reference), name (string)
+
+    Returns:
+    User object by name
+    """
     @classmethod
     def by_name(cls, name):
         user = User.all().filter('name =', name).get()
         return user
 
-    #function to simply create User object that we can later store in the database
+    """
+    Args: cls (class reference), name (string), pw (string), email (string, default = None)
+
+    Returns:
+    User object to be put into database
+    """
     @classmethod
     def register(cls, name, pw, email = None):
         pw_hash = functions.make_pw_hash(name, pw)
@@ -60,6 +118,12 @@ class User(db.Model):
                     pw_hash = pw_hash,
                     email = email)
 
+    """
+    Args: cls (class reference), name (string), pw (string)
+
+    Returns:
+    user object
+    """
     @classmethod
     #called cls.by_name instead of User.by_name() so that we can override the function
     #TODO change other use references

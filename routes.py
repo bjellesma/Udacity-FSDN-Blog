@@ -143,20 +143,37 @@ class Posts(MainHandler):
         #test if any get requests were sent in the url
         if self.request.get("action"):
             if self.request.get("action") == "delete":
-                #BUG function only takes effect when user refreshes page
-                post.delete()
-                self.render("main.html", posts = posts, user = self.user)
-                self.redirect("/")
+                #if the current use is the author, we also prevent deletion on the backend
+                if not self.user:
+                    self.redirect("/")
+                elif self.user.name == post.author:
+                    self.redirect("/")
+                else:
+                    #BUG function only takes effect when user refreshes page
+                    post.delete()
+                    self.render("main.html", posts = posts, user = self.user)
+                    self.redirect("/")
             elif self.request.get("action") == "edit":
-                self.render("edit.html", post = post)
+                #if the current use is the author, we also prevent edit on the backend
+                if not self.user:
+                    self.redirect("/")
+                elif self.user.name == post.author:
+                    self.redirect("/")
+                else:
+                    self.render("edit.html", post = post)
             elif self.request.get("action") == "like":
-                post.likes = int(post.likes) + 1
-                post.put()
-                like = models.Likes(parent = models.likes_key(), post_id=post.key().id(), author = self.user.name)
-                like.put()
-                self.render("main.html", posts = posts, user = self.user)
-                #BUG like only shows up after page reload
-                self.redirect("/")
+                if not self.user:
+                    self.redirect("/")
+                elif self.user.name == post.author:
+                    self.redirect("/")
+                else:
+                    post.likes = int(post.likes) + 1
+                    post.put()
+                    like = models.Likes(parent = models.likes_key(), post_id=post.key().id(), author = self.user.name)
+                    like.put()
+                    self.render("main.html", posts = posts, user = self.user)
+                    #BUG like only shows up after page reload
+                    self.redirect("/")
         else:
             #get all comments with the post id
             comments = greetings = models.Comments.all()
@@ -166,17 +183,21 @@ class Posts(MainHandler):
             #rener the posts page with the comments template
             self.render("posts.html", post = post, user = self.user, comments = comments)
     def post(self, post_id):
-        #postdata for editting post
-        subject = self.request.get("subject")
-        content = self.request.get("content")
+        #if the current use is not signed in, we also prevent update on the backend
+        if not self.user:
+            self.redirect("/")
+        else:
+            #postdata for editting post
+            subject = self.request.get("subject")
+            content = self.request.get("content")
 
-        #Update the post
-        key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
-        post = models.db.get(key)
-        post.subject = subject
-        post.content = content
-        post.put()
-        self.redirect('/posts/' + post_id)
+            #Update the post
+            key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
+            post = models.db.get(key)
+            post.subject = subject
+            post.content = content
+            post.put()
+            self.redirect('/posts/' + post_id)
 
 """
 Class: CreatePost
@@ -189,19 +210,23 @@ class CreatePost(MainHandler):
         self.render("create.html")
 
     def post(self):
-        subject = self.request.get('subject')
-        content = self.request.get('content')
-        author = self.user.name
-
-        #if the editted post contains subject and content
-        if subject and content:
-            p = models.Post(parent = models.blog_key(), author = author, subject = subject, content = content, likes =0, comments=0)
-            #put() will commit the database transaction
-            p.put()
-            self.redirect('/posts/%s' % str(p.key().id()))
+        #if the current use is not signed in, we also prevent creation on the backend
+        if not self.user:
+            self.redirect("/")
         else:
-            error = "subject and content, please!"
-            self.render("create.html", subject=subject, content=content, error=error)
+            subject = self.request.get('subject')
+            content = self.request.get('content')
+            author = self.user.name
+
+            #if the editted post contains subject and content
+            if subject and content:
+                p = models.Post(parent = models.blog_key(), author = author, subject = subject, content = content, likes =0, comments=0)
+                #put() will commit the database transaction
+                p.put()
+                self.redirect('/posts/%s' % str(p.key().id()))
+            else:
+                error = "subject and content, please!"
+                self.render("create.html", subject=subject, content=content, error=error)
 
 """
 Class: Comment
@@ -217,23 +242,27 @@ class Comment(MainHandler):
         self.render("comment.html", post = post)
 
     def post(self):
-        comment = self.request.get('comment')
-        post_id = int(self.request.get('post_id'))
-
-        #if the user has posted a comment
-        if comment:
-            c = models.Comments(parent = models.comments_key(), author = self.user.name, comment = comment, post_id = post_id)
-            c.put()
-            key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
-            post = models.db.get(key)
-            comments = greetings = models.Comments.all().filter('post_id =', post_id)
-            post.comments = post.comments + 1
-            post.put()
-            self.render("posts.html", post = post, user = self.user, comments = comments)
-            self.redirect("/posts/" + str(post_id))
+        #if the current use is not signed in, we also prevent comments on the backend
+        if not self.user:
+            self.redirect("/")
         else:
-            error = "comment, please!"
-            self.render("create.html", comment=comment, error=error)
+            comment = self.request.get('comment')
+            post_id = int(self.request.get('post_id'))
+
+            #if the user has posted a comment
+            if comment:
+                c = models.Comments(parent = models.comments_key(), author = self.user.name, comment = comment, post_id = post_id)
+                c.put()
+                key = models.db.Key.from_path('Post', int(post_id), parent=models.blog_key())
+                post = models.db.get(key)
+                comments = greetings = models.Comments.all().filter('post_id =', post_id)
+                post.comments = post.comments + 1
+                post.put()
+                self.render("posts.html", post = post, user = self.user, comments = comments)
+                self.redirect("/posts/" + str(post_id))
+            else:
+                error = "comment, please!"
+                self.render("create.html", comment=comment, error=error)
 
 """
 Class: login
