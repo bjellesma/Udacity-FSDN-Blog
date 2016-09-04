@@ -145,7 +145,7 @@ class Posts(MainHandler):
             if self.request.get("action") == "delete":
                 #if the current use is the author, we also prevent deletion on the backend
                 if not self.user:
-                    self.redirect("/")
+                    self.redirect("/login")
                 elif self.user.name == post.author:
                     self.redirect("/")
                 else:
@@ -156,14 +156,14 @@ class Posts(MainHandler):
             elif self.request.get("action") == "edit":
                 #if the current use is the author, we also prevent edit on the backend
                 if not self.user:
-                    self.redirect("/")
+                    self.redirect("/login")
                 elif self.user.name == post.author:
                     self.redirect("/")
                 else:
                     self.render("edit.html", post = post)
             elif self.request.get("action") == "like":
                 if not self.user:
-                    self.redirect("/")
+                    self.redirect("/login")
                 elif self.user.name == post.author:
                     self.redirect("/")
                 else:
@@ -185,7 +185,7 @@ class Posts(MainHandler):
     def post(self, post_id):
         #if the current use is not signed in, we also prevent update on the backend
         if not self.user:
-            self.redirect("/")
+            self.redirect("/login")
         else:
             #postdata for editting post
             subject = self.request.get("subject")
@@ -212,7 +212,7 @@ class CreatePost(MainHandler):
     def post(self):
         #if the current use is not signed in, we also prevent creation on the backend
         if not self.user:
-            self.redirect("/")
+            self.redirect("/login")
         else:
             subject = self.request.get('subject')
             content = self.request.get('content')
@@ -244,7 +244,7 @@ class Comment(MainHandler):
     def post(self):
         #if the current use is not signed in, we also prevent comments on the backend
         if not self.user:
-            self.redirect("/")
+            self.redirect("/login")
         else:
             comment = self.request.get('comment')
             post_id = int(self.request.get('post_id'))
